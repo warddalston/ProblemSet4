@@ -6,7 +6,9 @@
 rm(list=ls())
 #Second, set the working directory as appropriate.  This makes the code cleaner and helps to keep track of any saved files.
 setwd("~/Documents/WashU 2nd Year/Applied Stats Programming/Feb 13/ProblemSet4/")
-#Third, set the seed for replicability
+#Third, source my functions from the other script
+source("PS4Functions.R")
+#Fourth, set the seed for replicability
 set.seed(1801)
 
 ############# Section A: Reading in data without a clean format #################
