@@ -35,4 +35,11 @@ sapply(c("Globals","Turtles","Plots"),function(x) dir.create(file.path(DirCombin
 #Finally, create the sub-sub directories in a similiar manner.
 sapply(c("PositionPlot","WinnersPlot","PolarizationPlot","IncumbentPercentagePlot"),function(x) dir.create(file.path(DirCombined,"Plots",x)) ) #the file.path command links the parent directory, and sub directory to these sub-sub directories.  
 
-
+#### read in the turtles districts
+Start <- RowScanner("NetLogo.csv","TURTLES")
+Finish <-RowScanner("NetLogo.csv","{breed voters}")
+Turtles.colnames <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=Start,na.strings="")
+Turtles.list <- as.list(rep("",length(Turtles.colnames)))
+names(Turtles.list) <- Turtles.colnames
+Districts.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Finish-Start, skip=Start+1,na.strings="")
+Districts.data <- as.data.frame(Districts.data)
