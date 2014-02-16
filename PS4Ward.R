@@ -45,16 +45,17 @@ Turtles.colnames <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=Start,n
 Turtles.list <- as.list(rep("",length(Turtles.colnames)))
 names(Turtles.list) <- Turtles.colnames #this is now a named list with the same names as the TURTLES section of a NetLogo file
 
-#now create the districts data frame, the number
+####### create the districts data frame #############
 Finish <-RowScanner("NetLogo.csv","{breed voters}")-1 #where to stop scanning (minus one because we want to stop at the row right before this one)
 Districts.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Finish-Start-1, skip=Start+1,na.strings="") #nlines is finish-start-1 because this is the number of this type of turtle in the data, minus an additional one (because start is one too small - it is the line of colnames, not the line of row names.)
 Districts.data <- as.data.frame(Districts.data,stringsAsFactors=FALSE)
 
-#Now, start cleaning up this data: 
+########## Now, start cleaning up this data: ##########
 Districts.data <- DataThinner(Districts.data) #clean out the constant and missing rows. 
 Districts.data <- as.data.frame(lapply(Districts.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
 
-Districts.prefs <-  sapply(Districts.data$district.prefs, strsplit, split=" ") #split up the preference objects.
+####### split up the preference objects. ########
+Districts.prefs <-  sapply(Districts.data$district.prefs, strsplit, split=" ") 
 
 #the next three lines create new variables from the separated data
 Districts.data$pref.d1 <- sapply(1:nrow(Districts.data),function(i) Districts.prefs[[i]][1] )
@@ -62,4 +63,11 @@ Districts.data$pref.d2 <- sapply(1:nrow(Districts.data),function(i) Districts.pr
 Districts.data$pref.d3 <- sapply(1:nrow(Districts.data),function(i) Districts.prefs[[i]][3] )
 
 Districts.data$district.prefs <- NULL #remove the original 
+
+####### Move on to the voters ###########
+
+VoterStart <- RowScanner("NetLogo.csv","{breed voters}")
+VoterFinish <- RowScanner("NetLogo.csv","{breed activists}",start=VoterStart)-1
+Voters.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=VoterFinish-VoterStart, skip=VoterStart-1,na.strings="") 
+Voters.data <- as.data.frame(Voters.data,stringsAsFactors=FALSE)
 
