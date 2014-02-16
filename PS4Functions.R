@@ -23,3 +23,41 @@ RowScanner <- function(file,target,tries=10000,...){
     }
   }
 }
+
+#IdenticalCheck - See if every element of a vector is identical
+
+#This function returns a true or false, based on whether every element of a vector is identical to the first element of the vector (and hence, if all are equal!).  Useful for cleaning up data. 
+
+#input: x - a vector
+
+#output: logical
+
+#Author: Dalston G. Ward
+
+IdenticalCheck <- function(x) {
+  all(sapply(x[-1],identical,x[1])) #sapply does the comparison's element wise, and if any of them are not identical (ie a single false), then the over all result is false.  Otherwise, it is true.  
+} 
+
+#DataThinner - Gets rid of columns from a data frame that are either constant or all missing. 
+
+#This function takes as input a dataframe, and returns the same data frame with all constant and entirely missing columns removed.  It does this using the "all()" function to identify missing columns and the "identical()" function to identify constant columns.  It then subsets out these rows.  The user has the option to only remove missing columns or to remove both missing and constant columns (entirely missing columns are a subset of entirely constant columns)
+
+#input: x - a data frame
+#       reduce - a vector of what to remove.  Can be either "missing" or "both".  Defaults to both.
+
+#output: a reduced data frame
+
+#Author: Dalston G. Ward
+
+DataThinner <- function(x,reduce="both"){
+  if(reduce=="both"){
+ identical.drop <- apply(x,2,IdenticalCheck) #use IdenticalCheck to pick out columns that are cosntant 
+  x <- x[,!identical.drop]
+ return(x)
+  }
+  if(reduce=="missing"){
+  missing.drop <- apply(x,2,function(y) all(is.na(y))) # pick out columns that are entirely missing
+  x <- x[,!missing.drop]
+  return(x)
+  }
+}

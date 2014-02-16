@@ -10,6 +10,8 @@ setwd("~/Documents/WashU 2nd Year/Applied Stats Programming/Feb 13/ProblemSet4/"
 source("PS4Functions.R")
 #Fourth, set the seed for replicability
 set.seed(1801)
+#Fifth, load some packages
+library(plyr)
 
 ############# Section A: Reading in data without a clean format #################
 
@@ -36,10 +38,28 @@ sapply(c("Globals","Turtles","Plots"),function(x) dir.create(file.path(DirCombin
 sapply(c("PositionPlot","WinnersPlot","PolarizationPlot","IncumbentPercentagePlot"),function(x) dir.create(file.path(DirCombined,"Plots",x)) ) #the file.path command links the parent directory, and sub directory to these sub-sub directories.  
 
 #### read in the turtles districts
+
+#these first few lines create a list which serves as the colnames for the data to be read in.
 Start <- RowScanner("NetLogo.csv","TURTLES")
-Finish <-RowScanner("NetLogo.csv","{breed voters}")
 Turtles.colnames <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=Start,na.strings="")
 Turtles.list <- as.list(rep("",length(Turtles.colnames)))
-names(Turtles.list) <- Turtles.colnames
-Districts.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Finish-Start, skip=Start+1,na.strings="")
-Districts.data <- as.data.frame(Districts.data)
+names(Turtles.list) <- Turtles.colnames #this is now a named list with the same names as the TURTLES section of a NetLogo file
+
+#now create the districts data frame, the number
+Finish <-RowScanner("NetLogo.csv","{breed voters}")-1 #where to stop scanning (minus one because we want to stop at the row right before this one)
+Districts.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Finish-Start-1, skip=Start+1,na.strings="") #nlines is finish-start-1 because this is the number of this type of turtle in the data, minus an additional one (because start is one too small - it is the line of colnames, not the line of row names.)
+Districts.data <- as.data.frame(Districts.data,stringsAsFactors=FALSE)
+
+#Now, start cleaning up this data: 
+Districts.data <- DataThinner(Districts.data) #clean out the constant and missing rows. 
+Districts.data <- as.data.frame(lapply(Districts.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
+
+Districts.prefs <-  sapply(Districts.data$district.prefs, strsplit, split=" ") #split up the preference objects.
+
+#the next three lines create new variables from the separated data
+Districts.data$pref.d1 <- sapply(1:nrow(Districts.data),function(i) Districts.prefs[[i]][1] )
+Districts.data$pref.d2 <- sapply(1:nrow(Districts.data),function(i) Districts.prefs[[i]][2] )
+Districts.data$pref.d3 <- sapply(1:nrow(Districts.data),function(i) Districts.prefs[[i]][3] )
+
+Districts.data$district.prefs <- NULL #remove the original 
+
