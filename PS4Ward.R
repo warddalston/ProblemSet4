@@ -39,15 +39,16 @@ sapply(c("PositionPlot","WinnersPlot","PolarizationPlot","IncumbentPercentagePlo
 
 #### read in the turtles districts
 
-#these first few lines create a list which serves as the colnames for the data to be read in.
-Start <- RowScanner("NetLogo.csv","TURTLES")
-Turtles.colnames <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=Start,na.strings="")
+#these first few lines create a list which serves as the colnames for the data to be read in. Useful for all subsequent TURTLES objects
+StartColnames <- RowScanner("NetLogo.csv","TURTLES")
+Turtles.colnames <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartColnames,na.strings="")
 Turtles.list <- as.list(rep("",length(Turtles.colnames)))
 names(Turtles.list) <- Turtles.colnames #this is now a named list with the same names as the TURTLES section of a NetLogo file
 
 ####### create the districts data frame #############
-Finish <-RowScanner("NetLogo.csv","{breed voters}")-1 #where to stop scanning (minus one because we want to stop at the row right before this one)
-Districts.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Finish-Start-1, skip=Start+1,na.strings="") #nlines is finish-start-1 because this is the number of this type of turtle in the data, minus an additional one (because start is one too small - it is the line of colnames, not the line of row names.)
+DistrictStart <- RowScanner("NetLogo.csv","{breed districts}")
+DistrictFinish <-RowScanner("NetLogo.csv","{breed voters}") #where to stop scanning (minus one because we want to stop at the row right before this one)
+Districts.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=DistrictFinish-DistrictStart, skip=DistrictStart-1,na.strings="") #nlines is finish-start, which captures all rows from the first {breed district} to the first {breed voters}
 Districts.data <- as.data.frame(Districts.data,stringsAsFactors=FALSE)
 
 ########## Now, start cleaning up this data: ##########
@@ -66,8 +67,34 @@ Districts.data$district.prefs <- NULL #remove the original
 
 ####### Move on to the voters ###########
 
+###### read in the data ######
 VoterStart <- RowScanner("NetLogo.csv","{breed voters}")
 VoterFinish <- RowScanner("NetLogo.csv","{breed activists}",start=VoterStart)-1
 Voters.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=VoterFinish-VoterStart, skip=VoterStart-1,na.strings="") 
 Voters.data <- as.data.frame(Voters.data,stringsAsFactors=FALSE)
+
+###### Clean it up ######
+Voters.data <- DataThinner(Voters.data)  
+Voters.data <- as.data.frame(lapply(Voters.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
+
+####### split up the preference objects. ########
+Voters.prefs <-  sapply(Voters.data$prefs, strsplit, split=" ") 
+
+#the next three lines create new variables from the separated data
+Voters.data$pref.d1 <- sapply(1:nrow(Voters.data),function(i) Voters.prefs[[i]][1] )
+Voters.data$pref.d2 <- sapply(1:nrow(Voters.data),function(i) Voters.prefs[[i]][2] )
+Voters.data$pref.d3 <- sapply(1:nrow(Voters.data),function(i) Voters.prefs[[i]][3] )
+
+Voters.data$prefs <- NULL #remove the original 
+
+####### split up the salience objects. ########
+Voters.sals <-  sapply(Voters.data$this.voter.sal, strsplit, split=" ") 
+
+#the next three lines create new variables from the separated data
+Voters.data$this.voter.sal.d1 <- sapply(1:nrow(Voters.data),function(i) Voters.sals[[i]][1] )
+Voters.data$this.voter.sal.d2 <- sapply(1:nrow(Voters.data),function(i) Voters.sals[[i]][2] )
+Voters.data$this.voter.sal.d3 <- sapply(1:nrow(Voters.data),function(i) Voters.sals[[i]][3] )
+
+Voters.data$this.voter.sal <- NULL #remove the original 
+
 

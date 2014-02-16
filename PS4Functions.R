@@ -7,15 +7,16 @@
 #input: file - a string giving a file that can be read by scan()
 #       target - a string that the user is searching for
 #       tries - the number of rows in the data to search for the target.  Defaults to 10,000.
-#       start - the row in which to start looking for the target.  A numeric.
+#       start - the row in which to start looking for the target.  A numeric. Defaults to row 1
 #       ... subsequent arguements to pass to scan()
 
 #output: a scalar value, the row number where the target is located (so that if this output goes into scan as the skip arguement, it will begin with the lines below the target, which is ideal with a dataset with headers, like NetLogo data).  
 
 #Author: Dalston G. Ward
 
-RowScanner <- function(file,target,tries=10000,start=0,...){
-  for(i in start-1:tries){
+RowScanner <- function(file,target,tries=10000,start=1,...){
+  start <- start-1
+  for(i in start:tries){
     input <- scan(file=file, what="", sep=",", nlines=1, skip=i,quiet=TRUE,...)
     if(any(input%in%target)){
       cat("To get the row you want, skip",i,"lines \n")
