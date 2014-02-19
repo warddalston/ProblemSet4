@@ -68,8 +68,8 @@ Districts.data$district.prefs <- NULL #remove the original
 ####### Move on to the voters ###########
 
 ###### read in the data ######
-VoterStart <- RowScanner("NetLogo.csv","{breed voters}")
-VoterFinish <- RowScanner("NetLogo.csv","{breed activists}",start=VoterStart)-1
+VoterStart <- RowScanner("NetLogo.csv","{breed voters}",start=DistrictFinish)
+VoterFinish <- RowScanner("NetLogo.csv","{breed activists}",start=VoterStart)
 Voters.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=VoterFinish-VoterStart, skip=VoterStart-1,na.strings="") 
 Voters.data <- as.data.frame(Voters.data,stringsAsFactors=FALSE)
 
@@ -97,4 +97,99 @@ Voters.data$this.voter.sal.d3 <- sapply(1:nrow(Voters.data),function(i) Voters.s
 
 Voters.data$this.voter.sal <- NULL #remove the original 
 
+####### Move on to the Activists ###########
 
+###### read in the data ######
+ActivistStart <- RowScanner("NetLogo.csv","{breed activists}",start=VoterFinish)
+ActivistFinish <- RowScanner("NetLogo.csv","{breed parties}",start=ActivistStart)
+
+Activists.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=ActivistFinish-ActivistStart, skip=ActivistStart-1,na.strings="") 
+Activists.data <- as.data.frame(Activists.data,stringsAsFactors=FALSE)
+
+###### Clean it up ######
+Activists.data <- DataThinner(Activists.data)  
+Activists.data <- as.data.frame(lapply(Activists.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
+
+####### split up the preference objects. ########
+Activists.prefs <-  sapply(Activists.data$prefs, strsplit, split=" ") 
+
+#the next three lines create new variables from the separated data
+Activists.data$pref.d1 <- sapply(1:nrow(Activists.data),function(i) Activists.prefs[[i]][1] )
+Activists.data$pref.d2 <- sapply(1:nrow(Activists.data),function(i) Activists.prefs[[i]][2] )
+Activists.data$pref.d3 <- sapply(1:nrow(Activists.data),function(i) Activists.prefs[[i]][3] )
+
+Activists.data$prefs <- NULL #remove the original 
+
+####### split up the salience objects. ########
+Activists.sals <-  sapply(Activists.data$this.act.sal, strsplit, split=" ") 
+
+#the next three lines create new variables from the separated data
+Activists.data$this.act.sal.d1 <- sapply(1:nrow(Activists.data),function(i) Activists.sals[[i]][1] )
+Activists.data$this.act.sal.d2 <- sapply(1:nrow(Activists.data),function(i) Activists.sals[[i]][2] )
+Activists.data$this.act.sal.d3 <- sapply(1:nrow(Activists.data),function(i) Activists.sals[[i]][3] )
+
+Activists.data$this.act.sal <- NULL #remove the original 
+
+####### Move on to the Parties ###########
+
+###### read in the data ######
+PartyStart <- RowScanner("NetLogo.csv","{breed parties}",start=ActivistFinish)
+PartyFinish <- RowScanner("NetLogo.csv","{breed cands}",start=PartyStart)
+Parties.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=PartyFinish-PartyStart, skip=PartyStart-1,na.strings="") 
+Parties.data <- as.data.frame(Parties.data,stringsAsFactors=FALSE)
+
+###### Clean it up ######
+Parties.data <- DataThinner(Parties.data)  
+Parties.data <- as.data.frame(lapply(Parties.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
+
+####### split up the preference objects. ########
+Parties.mean.positions <-  sapply(Parties.data$mean.position, strsplit, split=" ") 
+
+#the next three lines create new variables from the separated data
+Parties.data$mean.position.d1 <- sapply(1:nrow(Parties.data),function(i) Parties.mean.positions[[i]][1] )
+Parties.data$mean.position.d2 <- sapply(1:nrow(Parties.data),function(i) Parties.mean.positions[[i]][2] )
+Parties.data$mean.position.d3 <- sapply(1:nrow(Parties.data),function(i) Parties.mean.positions[[i]][3] )
+
+Parties.data$mean.position <- NULL #remove the original 
+
+####### split up the salience objects. ########
+Parties.enforcement.points <-  sapply(Parties.data$enforcement.point, strsplit, split=" ") 
+
+#the next three lines create new variables from the separated data
+Parties.data$enforcement.point.d1 <- sapply(1:nrow(Parties.data),function(i) Parties.enforcement.points[[i]][1] )
+Parties.data$enforcement.point.d2 <- sapply(1:nrow(Parties.data),function(i) Parties.enforcement.points[[i]][2] )
+Parties.data$enforcement.point.d3 <- sapply(1:nrow(Parties.data),function(i) Parties.enforcement.points[[i]][3] )
+
+Parties.data$enforcement.point <- NULL #remove the original 
+
+####### Move on to the Candidates ###########
+
+###### read in the data ######
+CandStart <- RowScanner("NetLogo.csv","{breed cands}",start=PartyFinish)
+CandFinish <- RowScanner("NetLogo.csv","PATCHES",start=CandStart)-1 #because candidates are the last ones, the scanner identifies the beginning of the next part of NetLogo, which is patches.  There is a line of space between the end of the turtles and the beggining of candidates, so I subtract 1 from the finish point.  
+Candidates.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=CandFinish-CandStart, skip=CandStart-1,na.strings="") 
+Candidates.data <- as.data.frame(Candidates.data,stringsAsFactors=FALSE)
+
+###### Clean it up ######
+Candidates.data <- DataThinner(Candidates.data)  
+Candidates.data <- as.data.frame(lapply(Candidates.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
+
+####### split up the preference objects. ########
+Candidates.positions.obs <-  sapply(Candidates.data$positions.obs, strsplit, split=" ") 
+
+#the next three lines create new variables from the separated data
+Candidates.data$position.obs.d1 <- sapply(1:nrow(Candidates.data),function(i) Candidates.positions.obs[[i]][1] )
+Candidates.data$position.obs.d2 <- sapply(1:nrow(Candidates.data),function(i) Candidates.positions.obs[[i]][2] )
+Candidates.data$position.obs.d3 <- sapply(1:nrow(Candidates.data),function(i) Candidates.positions.obs[[i]][3] )
+
+Candidates.data$positions.obs <- NULL #remove the original 
+
+####### split up the salience objects. ########
+Candidates.positions.obs.last <-  sapply(Candidates.data$positions.obs.last, strsplit, split=" ") 
+
+#the next three lines create new variables from the separated data
+Candidates.data$position.obs.last.d1 <- sapply(1:nrow(Candidates.data),function(i) Candidates.positions.obs.last[[i]][1] )
+Candidates.data$position.obs.last.d2 <- sapply(1:nrow(Candidates.data),function(i) Candidates.positions.obs.last[[i]][2] )
+Candidates.data$position.obs.last.d3 <- sapply(1:nrow(Candidates.data),function(i) Candidates.positions.obs.last[[i]][3] )
+
+Candidates.data$positions.obs.last <- NULL #remove the original 
