@@ -63,3 +63,23 @@ DataThinner <- function(x,reduce="both"){
   return(x)
   }
 }
+
+#ClassChanger - A function to change character vectors into logical and numeric vectors, as appropriate
+
+#This function checks for the presence of letters in an element of a vector.  If it finds no letters then the vector is turned into a numeric.  If it finds charcters, it then checks if the string is TRUE or FALSE.  If so, it turns the vector into a logical.  If not, it leaves the vector unchanged.  Warning: currently it has no functionality for strings of numbers with punctuation or non numeric and non letter character.  ie: it will not know that "650?" should not be coerced to a numeric. 
+
+#input: x - a vector
+
+#output: the same vector, only coerced into logical or character, as appropraite
+
+#Author: Dalston G Ward
+
+ClassChanger <- function(x){
+  if(!any(unlist(strsplit(x,""))%in%c(letters,LETTERS) ) ){
+    as.numeric(x) 
+    } else {
+      if(all(sapply(x,function(x) x%in%c("TRUE","FALSE")))){
+        as.logical(x)
+      } else {x}
+    }
+}

@@ -37,7 +37,27 @@ sapply(c("Globals","Turtles","Plots"),function(x) dir.create(file.path(DirCombin
 #Finally, create the sub-sub directories in a similiar manner.
 sapply(c("PositionPlot","WinnersPlot","PolarizationPlot","IncumbentPercentagePlot"),function(x) dir.create(file.path(DirCombined,"Plots",x)) ) #the file.path command links the parent directory, and sub directory to these sub-sub directories.  
 
-#### read in the turtles districts
+### Create the Globals object
+
+StartGlobal <- RowScanner("NetLogo.csv","GLOBALS") #Identify the row of the data where the globals section begins
+Globals.names <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartGlobal,na.strings="") #this line of code reads in the row with the names for the globals 
+Globals.name.list <- as.list(rep("",length(Globals.names))) #create a list the same length as the number of globals, with a "" as every element.  This will be useful in the scan function, where the what arguement can take a list as an arguement.  
+names(Globals.name.list) <- Globals.names #name the elements of the list with the globals names. 
+
+Globals <- scan("NetLogo.csv", what=Globals.name.list, sep=",", nlines=1, skip=StartGlobal+1,na.strings="") #this reads in the data on the line with the globals values.  It usese this data to fill in the list defined in the code above.  
+
+#Now, I move to cleaning this thing up! 
+
+Globals <- lapply(Globals, function(x) gsub("\\]|\\[", "",x)) #remove brackets. 
+Globals <- lapply(Globals, function(x) gsub("\"", "",x)) #remove extra quote
+Globals <- sapply(Globals, strsplit, split=" ") #split up vectors
+Globals <- sapply(Globals,ClassChanger) #make the character vectors into numerics or logicals, as appropraite
+dump("Globals",file=file.path(DirCombined,"Globals","Globals.R")) #dump the object to the appropriate directory.  
+
+
+
+
+#### read in the TURTLES
 
 #these first few lines create a list which serves as the colnames for the data to be read in. Useful for all subsequent TURTLES objects
 StartColnames <- RowScanner("NetLogo.csv","TURTLES")
