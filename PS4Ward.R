@@ -67,8 +67,7 @@ names(Turtles.list) <- Turtles.colnames #this is now a named list with the same 
 
 ####### create the districts data frame #############
 DistrictStart <- RowScanner("NetLogo.csv","{breed districts}")
-DistrictFinish <-RowScanner("NetLogo.csv","{breed voters}") #where to stop scanning (minus one because we want to stop at the row right before this one)
-Districts.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=DistrictFinish-DistrictStart, skip=DistrictStart-1,na.strings="") #nlines is finish-start, which captures all rows from the first {breed district} to the first {breed voters}
+Districts.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n.districts, skip=DistrictStart-1,na.strings="") #nlines is finish-start, which captures all rows from the first {breed district} to the first {breed voters}
 Districts.data <- as.data.frame(Districts.data,stringsAsFactors=FALSE)
 
 ########## Now, start cleaning up this data: ##########
@@ -88,9 +87,8 @@ Districts.data$district.prefs <- NULL #remove the original
 ####### Move on to the voters ###########
 
 ###### read in the data ######
-VoterStart <- RowScanner("NetLogo.csv","{breed voters}",start=DistrictFinish)
-VoterFinish <- RowScanner("NetLogo.csv","{breed activists}",start=VoterStart)
-Voters.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=VoterFinish-VoterStart, skip=VoterStart-1,na.strings="") 
+VoterStart <- RowScanner("NetLogo.csv","{breed voters}",start=DistrictStart+Globals$n.districts)
+Voters.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n.districts*Globals$"num-voters-per-district", skip=VoterStart-1,na.strings="") 
 Voters.data <- as.data.frame(Voters.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
@@ -120,10 +118,8 @@ Voters.data$this.voter.sal <- NULL #remove the original
 ####### Move on to the Activists ###########
 
 ###### read in the data ######
-ActivistStart <- RowScanner("NetLogo.csv","{breed activists}",start=VoterFinish)
-ActivistFinish <- RowScanner("NetLogo.csv","{breed parties}",start=ActivistStart)
-
-Activists.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=ActivistFinish-ActivistStart, skip=ActivistStart-1,na.strings="") 
+ActivistStart <- RowScanner("NetLogo.csv","{breed activists}",start=VoterStart+Globals$n.districts*Globals$"num-voters-per-district")
+Activists.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n.districts*Globals$"num-activists-per-district", skip=ActivistStart-1,na.strings="") 
 Activists.data <- as.data.frame(Activists.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
@@ -153,9 +149,8 @@ Activists.data$this.act.sal <- NULL #remove the original
 ####### Move on to the Parties ###########
 
 ###### read in the data ######
-PartyStart <- RowScanner("NetLogo.csv","{breed parties}",start=ActivistFinish)
-PartyFinish <- RowScanner("NetLogo.csv","{breed cands}",start=PartyStart)
-Parties.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=PartyFinish-PartyStart, skip=PartyStart-1,na.strings="") 
+PartyStart <- RowScanner("NetLogo.csv","{breed parties}",start=ActivistStart+Globals$n.districts*Globals$"num-activists-per-district")
+Parties.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n.parties, skip=PartyStart-1,na.strings="") 
 Parties.data <- as.data.frame(Parties.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
@@ -185,9 +180,8 @@ Parties.data$enforcement.point <- NULL #remove the original
 ####### Move on to the Candidates ###########
 
 ###### read in the data ######
-CandStart <- RowScanner("NetLogo.csv","{breed cands}",start=PartyFinish)
-CandFinish <- RowScanner("NetLogo.csv","PATCHES",start=CandStart)-1 #because candidates are the last ones, the scanner identifies the beginning of the next part of NetLogo, which is patches.  There is a line of space between the end of the turtles and the beggining of candidates, so I subtract 1 from the finish point.  
-Candidates.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=CandFinish-CandStart, skip=CandStart-1,na.strings="") 
+CandStart <- RowScanner("NetLogo.csv","{breed cands}",start=PartyStart+Globals$n.parties)
+Candidates.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n.parties*Globals$n.districts, skip=CandStart-1,na.strings="") 
 Candidates.data <- as.data.frame(Candidates.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
@@ -213,3 +207,4 @@ Candidates.data$position.obs.last.d2 <- sapply(1:nrow(Candidates.data),function(
 Candidates.data$position.obs.last.d3 <- sapply(1:nrow(Candidates.data),function(i) Candidates.positions.obs.last[[i]][3] )
 
 Candidates.data$positions.obs.last <- NULL #remove the original 
+
