@@ -12,6 +12,7 @@ source("PS4Functions.R")
 set.seed(1801)
 #Fifth, load some packages
 library(plyr)
+library(ggplot2)
 
 ############# Section A: Reading in data without a clean format #################
 
@@ -363,4 +364,16 @@ polarization.data <- polarization.data[,-c(3,5)] #remove all but one of the x co
 colnames(polarization.data)[1:2] <- c("Period","CANDIDATES.y") #Rename a couple of columns so that we know better what is represented there. 
 polarization.data <- as.data.frame(apply(polarization.data,2,as.numeric))
 
+pdf(file=file.path(DirCombined,"Plots","PolarizationPlot","Polarization.pdf"),width=11,height=8.5) #create a graphic device, the size of a standard American piece of paper.  
+par(mfrow=c(1,3),oma=c(0,0,3,0),mar=c(5,4,0,2)) #three plots on a single device
+plot(y=polarization.data$CANDIDATES.y,x=polarization.data$VOTERS.y,pch="+",xlab="Voter Polarization",ylab="Candidate Polarization") #each candidate polarization value against its correpsonding voter polarization, to see if voters or candidates are more polarized
+abline(a=0,b=1,col="grey20") #plot a line representing equal polarization between the two
 
+plot(y=polarization.data$CANDIDATES.y,x=polarization.data$ACTIVISTS.y,pch="+",xlab="Activist Polarization",ylab="Candidate Polarization") #same idea as the above plot, just changing the values 
+abline(a=0,b=1,col="grey20")
+
+plot(y=polarization.data$VOTERS.y,x=polarization.data$ACTIVISTS.y,pch="+",xlab="Activist Polarization",ylab="Voter Polarization") #same idea as the other plots, again, new data
+abline(a=0,b=1,col="grey20")
+
+mtext("Bivariate Polarization Relationships",side=3,outer=TRUE,line=1,cex=1.5,adj=.5)
+dev.off()
