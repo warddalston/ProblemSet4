@@ -71,7 +71,7 @@ Districts.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals
 Districts.data <- as.data.frame(Districts.data,stringsAsFactors=FALSE)
 
 ########## Now, start cleaning up this data: ##########
-Districts.data <- DataThinner(Districts.data) #clean out the constant and missing rows. 
+Districts.data <- DataThinner(Districts.data) #clean out the constant and missing row (as required by bullet point three of question 5) 
 Districts.data <- as.data.frame(lapply(Districts.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
 
 ####### split up the preference objects. ########
@@ -92,7 +92,7 @@ Voters.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n.
 Voters.data <- as.data.frame(Voters.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
-Voters.data <- DataThinner(Voters.data)  
+Voters.data <- DataThinner(Voters.data)  #clean out the constant and missing row (as required by bullet point three of question 5) 
 Voters.data <- as.data.frame(lapply(Voters.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
 
 ####### split up the preference objects. ########
@@ -123,7 +123,7 @@ Activists.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals
 Activists.data <- as.data.frame(Activists.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
-Activists.data <- DataThinner(Activists.data)  
+Activists.data <- DataThinner(Activists.data) #clean out the constant and missing row (as required by bullet point three of question 5)  
 Activists.data <- as.data.frame(lapply(Activists.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
 
 ####### split up the preference objects. ########
@@ -154,7 +154,7 @@ Parties.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n
 Parties.data <- as.data.frame(Parties.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
-Parties.data <- DataThinner(Parties.data)  
+Parties.data <- DataThinner(Parties.data)  #clean out the constant and missing row (as required by bullet point three of question 5) 
 Parties.data <- as.data.frame(lapply(Parties.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
 
 ####### split up the preference objects. ########
@@ -185,7 +185,7 @@ Candidates.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Global
 Candidates.data <- as.data.frame(Candidates.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
-Candidates.data <- DataThinner(Candidates.data)  
+Candidates.data <- DataThinner(Candidates.data)  #clean out the constant and missing row (as required by bullet point three of question 5) 
 Candidates.data <- as.data.frame(lapply(Candidates.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
 
 ####### split up the preference objects. ########
@@ -207,4 +207,82 @@ Candidates.data$position.obs.last.d2 <- sapply(1:nrow(Candidates.data),function(
 Candidates.data$position.obs.last.d3 <- sapply(1:nrow(Candidates.data),function(i) Candidates.positions.obs.last[[i]][3] )
 
 Candidates.data$positions.obs.last <- NULL #remove the original 
+
+#### Now, the plotting section 
+
+#locate the start of the plotting section in the NetLogo file with RowScanner
+StartPlots <- RowScanner("NetLogo.csv","PLOTS", start=CandStart)
+
+#begin by writing some code to help read in each section (constructing the list that is like the skelton of the dataframes!) 
+
+Plot.names.1 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartPlots+13,na.strings="") #this line of code reads in the row with the red/blue part of the names for the plot data
+Plot.names.1 <- Plot.names.1[-which(is.na(Plot.names.1))] #Remove Missing Values
+Plot.names.1 <- lapply(Plot.names.1, function(x) gsub("\"", "",x)) #remove extra quotes
+Plot.names.1 <- rep(Plot.names.1,each=4) #make enough repetitions for each element that will go into Plot names 2
+
+Plot.names.2 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartPlots+14,na.strings="") #this line of code reads in the row with the 2nd part of names. 
+Plot.names.2 <- Plot.names.2[-which(is.na(Plot.names.2))] #Remove Missing Values
+
+Plot.names <-paste(Plot.names.1,Plot.names.2,sep=".") #Now combine the two. 
+
+Plot.names.list <- as.list(rep("",length(Plot.names))) #create a list the same length as the number of globals, with a "" as every element.  This will be useful in the scan function, where the what arguement can take a list as an arguement.  
+names(Plot.names.list) <- Plot.names #name the elements of the list with the plot names. 
+
+
+#This next section actually reads in the data for d1
+
+Plot.data.d1 <- scan("NetLogo.csv", what=Plot.names.list, sep=",", nlines=Globals$"global-counter", skip=StartPlots+15,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+Plot.data.d1 <- as.data.frame(Plot.data.d1,stringsAsFactors=FALSE) #coerce it into a data frame
+Plot.data.d1 <- DataThinner(Plot.data.d1)  # remove the constant and missing columns
+Plot.data.d1 <- Plot.data.d1[,-c(3,5,7,9,11)] #remove all but one of the x columns, which are all duplicates 
+colnames(Plot.data.d1)[1] <- "Period" #this column represents which iteration this row's values come from.  
+Plot.data.d1 <- as.data.frame(apply(Plot.data.d1,2,as.numeric))
+
+
+#This starts reading in d2
+D2Start <- RowScanner("NetLogo.csv","\"D2\"", start=StartPlots+168+14)
+Plot.data.d2 <-  scan("NetLogo.csv", what=Plot.names.list, sep=",", nlines=Globals$"global-counter", skip=D2Start+13,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+Plot.data.d2 <- as.data.frame(Plot.data.d2,stringsAsFactors=FALSE) #coerce it into a data frame
+Plot.data.d2 <- DataThinner(Plot.data.d2)  # remove the constant and missing columns
+Plot.data.d2 <- Plot.data.d2[,-c(3,5,7,9,11)] #remove all but one of the x columns, which are all duplicates 
+colnames(Plot.data.d2)[1] <- "Period" #this column represents which iteration this row's values come from.  
+Plot.data.d2 <- as.data.frame(apply(Plot.data.d2,2,as.numeric))
+
+
+#This starts reading in d3
+D3Start <- RowScanner("NetLogo.csv","\"D3\"", start=D2Start+168+13)
+Plot.data.d3 <-  scan("NetLogo.csv", what=Plot.names.list, sep=",", nlines=Globals$"global-counter", skip=D3Start+13,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+Plot.data.d3 <- as.data.frame(Plot.data.d3,stringsAsFactors=FALSE) #coerce it into a data frame
+Plot.data.d3 <- DataThinner(Plot.data.d3)  # remove the constant and missing columns
+Plot.data.d3 <- Plot.data.d3[,-c(3,5,7,9,11)] #remove all but one of the x columns, which are all duplicates 
+colnames(Plot.data.d3)[1] <- "Period" #this column represents which iteration this row's values come from.  
+Plot.data.d3 <- as.data.frame(apply(Plot.data.d3,2,as.numeric))
+
+pdf(file=file.path(DirCombined,"Plots","PositionPlot","Positions.pdf"),width=8.5,height=11)
+par(mfrow=c(3,1),mar=c(0,0,0,0),oma=c(5,5,5,2))
+plot(x=0:168,y=Plot.data.d1$Red.y,type="l",col="red",ylab="Dimension 1",xaxt="n",ylim=c(min(c(Plot.data.d1$Red.y,Plot.data.d1$Blue.y)),max(c(Plot.data.d1$Red.y,Plot.data.d1$Blue.y))))
+lines(x=0:168,y=Plot.data.d1$Blue.y,col="Blue")
+plot(x=0:168,y=Plot.data.d2$Red.y,type="l",col="red",ylab="Dimension 2",xaxt="n",ylim=c(min(c(Plot.data.d2$Red.y,Plot.data.d2$Blue.y)),max(c(Plot.data.d2$Red.y,Plot.data.d2$Blue.y))),bty="U")
+lines(x=0:168,y=Plot.data.d2$Blue.y,col="Blue")
+plot(x=0:168,y=Plot.data.d3$Red.y,type="l",col="red",ylab="Dimension 3",xaxt="n",ylim=c(min(c(Plot.data.d3$Red.y,Plot.data.d3$Blue.y)),max(c(Plot.data.d3$Red.y,Plot.data.d3$Blue.y))),bty="U")
+lines(x=0:168,y=Plot.data.d3$Blue.y,col="Blue")
+axis(1,at=seq(10,160,15),outer=TRUE,lab=)
+mtext("Candidate Positions",side=3,outer=TRUE,line=1,cex=1.5,adj=.5)
+mtext("Simulation Period",side=1,outer=TRUE,line=2.5,cex=.75,adj=.5)
+mtext(c("Dimension 1","Dimension 2","Dimension 3"),side=2,outer=TRUE,line=2.5,cex=.75,at=c(5/6,3/6,1/6))
+
+plot(x=0:168,y=Plot.data.d1$RedActivists.y,type="l",col="red",ylab="Dimension 1",xaxt="n",ylim=c(min(c(Plot.data.d1$RedActivists.y,Plot.data.d1$BlueActivists.y)),max(c(Plot.data.d1$RedActivists.y,Plot.data.d1$BlueActivists.y))))
+lines(x=0:168,y=Plot.data.d1$BlueActivists.y,col="Blue")
+plot(x=0:168,y=Plot.data.d2$RedActivists.y,type="l",col="red",ylab="Dimension 2",xaxt="n",ylim=c(min(c(Plot.data.d2$RedActivists.y,Plot.data.d2$BlueActivists.y)),max(c(Plot.data.d2$RedActivists.y,Plot.data.d2$BlueActivists.y))),bty="U")
+lines(x=0:168,y=Plot.data.d2$BlueActivists.y,col="Blue")
+plot(x=0:168,y=Plot.data.d3$RedActivists.y,type="l",col="red",ylab="Dimension 3",xaxt="n",ylim=c(min(c(Plot.data.d3$RedActivists.y,Plot.data.d3$BlueActivists.y)),max(c(Plot.data.d3$RedActivists.y,Plot.data.d3$BlueActivists.y))),bty="U")
+lines(x=0:168,y=Plot.data.d3$BlueActivists.y,col="Blue")
+axis(1,at=seq(10,160,15),outer=TRUE,lab=)
+mtext("Activist Positions",side=3,outer=TRUE,line=1,cex=1.5,adj=.5)
+mtext("Simulation Period",side=1,outer=TRUE,line=2.5,cex=.75,adj=.5)
+mtext(c("Dimension 1","Dimension 2","Dimension 3"),side=2,outer=TRUE,line=2.5,cex=.75,at=c(5/6,3/6,1/6))
+dev.off()
+
+
+
 
