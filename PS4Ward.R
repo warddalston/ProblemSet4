@@ -377,3 +377,36 @@ abline(a=0,b=1,col="grey20")
 
 mtext("Bivariate Polarization Relationships",side=3,outer=TRUE,line=1,cex=1.5,adj=.5)
 dev.off()
+
+### Finally, code to bring in the Incumbent Wins data.  
+
+#First, pick out the row where the winners section starts
+StartIncumbents <- RowScanner("NetLogo.csv","\"INCUMBENT\"", start=StartPolarization+168)
+
+incumbent.names <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartIncumbents+7,na.strings="") #this line of code reads in the row of column names for this part of the output. 
+
+incumbent.names.list <- as.list(rep("",length(incumbent.names))) #create a list the same length as the number of globals, with a "" as every element.  This will be useful in the scan function, where the what arguement can take a list as an arguement.  
+names(incumbent.names.list) <- incumbent.names #name the elements of the list with the incumbent column names. 
+
+
+#This next section actually reads in the data.
+
+incumbent.data <- scan("NetLogo.csv", what=incumbent.names.list, sep=",", nlines=Globals$"global-counter", skip=StartIncumbents+8,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+incumbent.data <- as.data.frame(incumbent.data,stringsAsFactors=FALSE) #coerce it into a data frame
+incumbent.data <- DataThinner(incumbent.data)  # remove the constant and missing columns
+colnames(incumbent.data)[1:2] <- c("Period","Incumbent.win.percentage") #Rename the columns
+incumbent.data <- as.data.frame(apply(incumbent.data,2,as.numeric)) #make it numeric.
+
+## Make the plots for the incumbents data.
+dev.off()
+split.screen(figs=c(2,1))
+split.screen(figs=c(1,2),screen=2)
+screen(1)
+par(mar=c(4,4,3,1))
+plot(x=incumbent.data$Period[-1],y=incumbent.data$Incumbent.win.percentage[-1],type="l",col="purple",main="Trend in Incumbent Win Percentage [Excluding Period 0]",ylab="Winning Percentage",xlab="Simulation period")
+lines(loess(incumbent.data$Incumbent.win.percentage[-1]~incumbent.data$Period[-1]))
+screen(3)
+par(mar=c(4,4,3,1))
+boxplot(list(incumbent.data$Incumbent.win.percentage[1:84],incumbent.data$Incumbent.win.percentage[(168/2)+1:168]),outline=FALSE,names=c("Periods 1-84","Periods 85-168"),ylab="Winning Percentage")
+screen(4)
+plot(density(incumbent.data$Incumbent.win.percentage[-1]),xlab="Winning Percentage",ylab="Kernal Density",main="Distribution of Winning Percentages")
