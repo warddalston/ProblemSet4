@@ -210,6 +210,8 @@ Candidates.data$positions.obs.last <- NULL #remove the original
 
 #### Now, the plotting section 
 
+### First, the positions plots
+
 #locate the start of the plotting section in the NetLogo file with RowScanner
 StartPlots <- RowScanner("NetLogo.csv","PLOTS", start=CandStart)
 
@@ -221,7 +223,6 @@ Plot.names.1 <- lapply(Plot.names.1, function(x) gsub("\"", "",x)) #remove extra
 Plot.names.1 <- rep(Plot.names.1,each=4) #make enough repetitions for each element that will go into Plot names 2
 
 Plot.names.2 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartPlots+14,na.strings="") #this line of code reads in the row with the 2nd part of names. 
-Plot.names.2 <- Plot.names.2[-which(is.na(Plot.names.2))] #Remove Missing Values
 
 Plot.names <-paste(Plot.names.1,Plot.names.2,sep=".") #Now combine the two. 
 
@@ -258,31 +259,108 @@ Plot.data.d3 <- Plot.data.d3[,-c(3,5,7,9,11)] #remove all but one of the x colum
 colnames(Plot.data.d3)[1] <- "Period" #this column represents which iteration this row's values come from.  
 Plot.data.d3 <- as.data.frame(apply(Plot.data.d3,2,as.numeric))
 
-pdf(file=file.path(DirCombined,"Plots","PositionPlot","Positions.pdf"),width=8.5,height=11)
-par(mfrow=c(3,1),mar=c(0,0,0,0),oma=c(5,5,5,2))
-plot(x=0:168,y=Plot.data.d1$Red.y,type="l",col="red",ylab="Dimension 1",xaxt="n",ylim=c(min(c(Plot.data.d1$Red.y,Plot.data.d1$Blue.y)),max(c(Plot.data.d1$Red.y,Plot.data.d1$Blue.y))))
-lines(x=0:168,y=Plot.data.d1$Blue.y,col="Blue")
-plot(x=0:168,y=Plot.data.d2$Red.y,type="l",col="red",ylab="Dimension 2",xaxt="n",ylim=c(min(c(Plot.data.d2$Red.y,Plot.data.d2$Blue.y)),max(c(Plot.data.d2$Red.y,Plot.data.d2$Blue.y))),bty="U")
+pdf(file=file.path(DirCombined,"Plots","PositionPlot","Positions.pdf"),width=8.5,height=11) #create a graphic device, the size of a standard American piece of paper.  
+par(mfrow=c(3,1),mar=c(0,0,0,0),oma=c(5,5,5,2)) #set up the device.  I've made it so that I can have three plots stacked on top of each other. 
+plot(x=0:168,y=Plot.data.d1$Red.y,type="l",col="red",xaxt="n",ylim=c(min(c(Plot.data.d1$Red.y,Plot.data.d1$Blue.y)),max(c(Plot.data.d1$Red.y,Plot.data.d1$Blue.y)))) #the messy bit sets the y axis limits to the minimum and maximum values.  Otherwise, this just plots the trend for the red candidates over time.  No x axis, because the plots are stacked, and no labels because I'll add these later.
+lines(x=0:168,y=Plot.data.d1$Blue.y,col="Blue") #add the blue trend line 
+plot(x=0:168,y=Plot.data.d2$Red.y,type="l",col="red",xaxt="n",ylim=c(min(c(Plot.data.d2$Red.y,Plot.data.d2$Blue.y)),max(c(Plot.data.d2$Red.y,Plot.data.d2$Blue.y))),bty="U") #same as above, but with bty="U", which makes it so that the line separating plots isnt drawn twice. 
 lines(x=0:168,y=Plot.data.d2$Blue.y,col="Blue")
-plot(x=0:168,y=Plot.data.d3$Red.y,type="l",col="red",ylab="Dimension 3",xaxt="n",ylim=c(min(c(Plot.data.d3$Red.y,Plot.data.d3$Blue.y)),max(c(Plot.data.d3$Red.y,Plot.data.d3$Blue.y))),bty="U")
+plot(x=0:168,y=Plot.data.d3$Red.y,type="l",col="red",xaxt="n",ylim=c(min(c(Plot.data.d3$Red.y,Plot.data.d3$Blue.y)),max(c(Plot.data.d3$Red.y,Plot.data.d3$Blue.y))),bty="U")
 lines(x=0:168,y=Plot.data.d3$Blue.y,col="Blue")
-axis(1,at=seq(10,160,15),outer=TRUE,lab=)
-mtext("Candidate Positions",side=3,outer=TRUE,line=1,cex=1.5,adj=.5)
-mtext("Simulation Period",side=1,outer=TRUE,line=2.5,cex=.75,adj=.5)
-mtext(c("Dimension 1","Dimension 2","Dimension 3"),side=2,outer=TRUE,line=2.5,cex=.75,at=c(5/6,3/6,1/6))
+axis(1,at=seq(10,160,15),outer=TRUE,lab=) #Adds the single x-axis for all three plots at the bottom
+mtext("Average Candidate Positions",side=3,outer=TRUE,line=1,cex=1.5,adj=.5) #the title, above everything in the outer margin
+mtext("Simulation Period",side=1,outer=TRUE,line=2.5,cex=.75,adj=.5) #Below everything add the x axis label
+mtext(c("Dimension 1","Dimension 2","Dimension 3"),side=2,outer=TRUE,line=2.5,cex=.75,at=c(5/6,3/6,1/6)) #Vectorize the Y-axis labels, putting them each in the middle of each plot.  
 
-plot(x=0:168,y=Plot.data.d1$RedActivists.y,type="l",col="red",ylab="Dimension 1",xaxt="n",ylim=c(min(c(Plot.data.d1$RedActivists.y,Plot.data.d1$BlueActivists.y)),max(c(Plot.data.d1$RedActivists.y,Plot.data.d1$BlueActivists.y))))
+#All of this code is exactly the same as above only with different data.  
+plot(x=0:168,y=Plot.data.d1$RedActivists.y,type="l",col="red",xaxt="n",ylim=c(min(c(Plot.data.d1$RedActivists.y,Plot.data.d1$BlueActivists.y)),max(c(Plot.data.d1$RedActivists.y,Plot.data.d1$BlueActivists.y))))
 lines(x=0:168,y=Plot.data.d1$BlueActivists.y,col="Blue")
-plot(x=0:168,y=Plot.data.d2$RedActivists.y,type="l",col="red",ylab="Dimension 2",xaxt="n",ylim=c(min(c(Plot.data.d2$RedActivists.y,Plot.data.d2$BlueActivists.y)),max(c(Plot.data.d2$RedActivists.y,Plot.data.d2$BlueActivists.y))),bty="U")
+plot(x=0:168,y=Plot.data.d2$RedActivists.y,type="l",col="red",xaxt="n",ylim=c(min(c(Plot.data.d2$RedActivists.y,Plot.data.d2$BlueActivists.y)),max(c(Plot.data.d2$RedActivists.y,Plot.data.d2$BlueActivists.y))),bty="U")
 lines(x=0:168,y=Plot.data.d2$BlueActivists.y,col="Blue")
-plot(x=0:168,y=Plot.data.d3$RedActivists.y,type="l",col="red",ylab="Dimension 3",xaxt="n",ylim=c(min(c(Plot.data.d3$RedActivists.y,Plot.data.d3$BlueActivists.y)),max(c(Plot.data.d3$RedActivists.y,Plot.data.d3$BlueActivists.y))),bty="U")
+plot(x=0:168,y=Plot.data.d3$RedActivists.y,type="l",col="red",xaxt="n",ylim=c(min(c(Plot.data.d3$RedActivists.y,Plot.data.d3$BlueActivists.y)),max(c(Plot.data.d3$RedActivists.y,Plot.data.d3$BlueActivists.y))),bty="U")
 lines(x=0:168,y=Plot.data.d3$BlueActivists.y,col="Blue")
 axis(1,at=seq(10,160,15),outer=TRUE,lab=)
-mtext("Activist Positions",side=3,outer=TRUE,line=1,cex=1.5,adj=.5)
+mtext("Average Activist Positions",side=3,outer=TRUE,line=1,cex=1.5,adj=.5)
 mtext("Simulation Period",side=1,outer=TRUE,line=2.5,cex=.75,adj=.5)
 mtext(c("Dimension 1","Dimension 2","Dimension 3"),side=2,outer=TRUE,line=2.5,cex=.75,at=c(5/6,3/6,1/6))
-dev.off()
+
+#Again, the same but with different data 
+plot(x=0:168,y=Plot.data.d1$RedVoters.y,type="l",col="red",ylab="Dimension 1",xaxt="n",ylim=c(min(c(Plot.data.d1$RedVoters.y,Plot.data.d1$BlueVoters.y)),max(c(Plot.data.d1$RedVoters.y,Plot.data.d1$BlueVoters.y))))
+lines(x=0:168,y=Plot.data.d1$BlueVoters.y,col="Blue")
+plot(x=0:168,y=Plot.data.d2$RedVoters.y,type="l",col="red",ylab="Dimension 2",xaxt="n",ylim=c(min(c(Plot.data.d2$RedVoters.y,Plot.data.d2$BlueVoters.y)),max(c(Plot.data.d2$RedVoters.y,Plot.data.d2$BlueVoters.y))),bty="U")
+lines(x=0:168,y=Plot.data.d2$BlueVoters.y,col="Blue")
+plot(x=0:168,y=Plot.data.d3$RedVoters.y,type="l",col="red",ylab="Dimension 3",xaxt="n",ylim=c(min(c(Plot.data.d3$RedVoters.y,Plot.data.d3$BlueVoters.y)),max(c(Plot.data.d3$RedVoters.y,Plot.data.d3$BlueVoters.y))),bty="U")
+lines(x=0:168,y=Plot.data.d3$BlueVoters.y,col="Blue")
+axis(1,at=seq(10,160,15),outer=TRUE,lab=)
+mtext("Average Voter Positions",side=3,outer=TRUE,line=1,cex=1.5,adj=.5)
+mtext("Simulation Period",side=1,outer=TRUE,line=2.5,cex=.75,adj=.5)
+mtext(c("Dimension 1","Dimension 2","Dimension 3"),side=2,outer=TRUE,line=2.5,cex=.75,at=c(5/6,3/6,1/6))
+dev.off() #close the device, and go check it out! 
+
+### The winners section
+
+#First, pick out the row where the winners section starts
+StartWinners <- RowScanner("NetLogo.csv","\"WINNERS\"", start=D3Start+168+13)
+
+winners.names.1 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartWinners+8,na.strings="") #this line of code reads in the row with the red/blue part of the names for the winners data
+winners.names.1 <- winners.names.1[-which(is.na(winners.names.1))] #Remove Missing Values
+winners.names.1 <- lapply(winners.names.1, function(x) gsub("\"", "",x)) #remove extra quotes
+winners.names.1 <- rep(winners.names.1,each=4) #make enough repetitions for each element that will go into Plot names 2
+
+winners.names.2 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartWinners+9,na.strings="") #this line of code reads in the row with the 2nd part of names. 
+winners.names <-paste(winners.names.1,winners.names.2,sep=".") #Now combine the two. 
+
+winners.names.list <- as.list(rep("",length(winners.names))) #create a list the same length as the number of globals, with a "" as every element.  This will be useful in the scan function, where the what arguement can take a list as an arguement.  
+names(winners.names.list) <- winners.names #name the elements of the list with the plot names. 
 
 
+#This next section actually reads in the data for d1
+
+winners.data <- scan("NetLogo.csv", what=winners.names.list, sep=",", nlines=Globals$"global-counter", skip=StartWinners+10,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+winners.data <- as.data.frame(winners.data,stringsAsFactors=FALSE) #coerce it into a data frame
+winners.data <- DataThinner(winners.data)  # remove the constant and missing columns
+winners.data <- winners.data[,-c(3,4)] #remove all but one of the x columns, which are all duplicates 
+colnames(winners.data)[1] <- "Period" #this column represents which iteration this row's values come from.  
+winners.data <- as.data.frame(apply(winners.data,2,as.numeric))
+
+# Make the winners plot.  I choose to make density plots for this one. 
+
+#make the density plots on thier own so that their elements can be used in formatting
+Blue.Density <- density(winners.data[,2])
+Red.Density <- density(winners.data[,3])
+
+pdf(file=file.path(DirCombined,"Plots","WinnersPlot","Winner.pdf"),width=8.5,height=11) #create a graphic device, the size of a standard American piece of paper.  
+plot(x=Blue.Density$x,y=Blue.Density$y,xlim=c(min(c(Blue.Density$x,Red.Density$x)),max(c(Blue.Density$x,Red.Density$x))),ylim=c(0,max(c(Blue.Density$y,Red.Density$y))),col="Blue",type="l",ylab="Kernal Density",xlab="Percentage of \"Winning\" Candidates",bty="n",main="Distribution of the Percentage of each Party's Candidates Winning in each Period") #this again sets the limits of the axes to fit the data and also writes the labels and titles
+lines(x=Red.Density$x,y=Red.Density$y,col="red") #the other party 
+legend("topright",legend=c("Blue Party","Red Party"),lty=1,col=c("Blue","Red"),bty="n") 
+rug(winners.data[,2],col="Blue") #plots where the data points are.  Doesn't look as nice when there isn't as much data....
+rug(winners.data[,3],col="Red")
+dev.off() #go check this one out too! 
+
+### The winners section
+
+#First, pick out the row where the winners section starts
+StartPolarization <- RowScanner("NetLogo.csv","\"POLARIZATION\"", start=StartWinners+168)
+
+polarization.names.1 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartPolarization+8,na.strings="") #this line of code reads in the row with the red/blue part of the names for the polarization data
+polarization.names.1 <- polarization.names.1[-which(is.na(polarization.names.1))] #Remove Missing Values
+polarization.names.1 <- lapply(polarization.names.1, function(x) gsub("\"", "",x)) #remove extra quotes
+polarization.names.1 <- rep(polarization.names.1,each=4) #make enough repetitions for each element that will go into Plot names 2
+
+polarization.names.2 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartPolarization+9,na.strings="") #this line of code reads in the row with the 2nd part of names. 
+polarization.names <-paste(polarization.names.1,polarization.names.2,sep=".") #Now combine the two. 
+
+polarization.names.list <- as.list(rep("",length(polarization.names))) #create a list the same length as the number of globals, with a "" as every element.  This will be useful in the scan function, where the what arguement can take a list as an arguement.  
+names(polarization.names.list) <- polarization.names #name the elements of the list with the plot names. 
+
+
+#This next section actually reads in the data for d1
+
+polarization.data <- scan("NetLogo.csv", what=polarization.names.list, sep=",", nlines=Globals$"global-counter", skip=StartPolarization+10,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+polarization.data <- as.data.frame(polarization.data,stringsAsFactors=FALSE) #coerce it into a data frame
+polarization.data <- DataThinner(polarization.data)  # remove the constant and missing columns
+polarization.data <- polarization.data[,-c(3,5)] #remove all but one of the x columns, which are all duplicates 
+colnames(polarization.data)[1:2] <- c("Period","CANDIDATES.y") #Rename a couple of columns so that we know better what is represented there. 
+polarization.data <- as.data.frame(apply(polarization.data,2,as.numeric))
 
 
