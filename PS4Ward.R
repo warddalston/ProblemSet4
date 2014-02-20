@@ -8,7 +8,9 @@ rm(list=ls())
 setwd("~/Documents/WashU 2nd Year/Applied Stats Programming/Feb 13/ProblemSet4/")
 #Third, source my functions from the other script
 source("PS4Functions.R")
-#Fourth, set the seed for replicability
+#Fourth, some packages
+library(lattice)
+library(spuRs)
 
 
 ############# Section A: Reading in data without a clean format #################
@@ -20,7 +22,9 @@ source("PS4Functions.R")
 #This function does a lot.  First, it creates a series of directories in which NetLogo objects will be stored. It creates an R object containing NetLogo Globals information. It creates a .csv file for each type type of Turtle.  It also creates several plots and accompanying .csv files for these plots.  
 
 #Input: NetLogoFile - a charcter string containing a file path to a NetLogo File
-#       PlotRow - the row in which the information about plots begins.  In a NetLogo output this is the row that simply contains "PLOTS".  The function can find this row on its own, but this takes several minutes of scanning rows.  Thus, for better performance, I recommend giving this row as input.  Defaults to null.  WARNING: scanning the file row by row to find the start of the plots section takes around 5 to 10 minutes
+#       PlotRow - the row in which the information about plots begins.  In a NetLogo output this is the row that simply contains "PLOTS".  The function can find this row on its own, but this takes several minutes of scanning rows.  Thus, for better performance, I recommend giving this row as input.  Defaults to null.  
+#########################WARNING: scanning the file row by row to find the start of the plots section takes around 5 to 10 minutes. 
+#########################SECOND WARNING: This function will not work unless the functions contained in PS4Functions.R have been sourced into the current workspace!
 
 #Output: A directory containing all of the relevent information for performing anlaysis on a NetLogo simulation.  A list of global parameter values, .csv files for the Turtle breeds, and plots capturing a the behavior of the simulaiton (with relevent .csv files for the plots)
 
@@ -445,3 +449,53 @@ dev.off()
 }
 
 NetLogoReader(NetLogoFile="NetLogo.csv",PlotRow=8531) #It works!!!!
+
+############ JMR Problems #############
+
+##Chapter 4, Problem 3
+
+SquareCubes <- function(n){
+    cat("Number    Square    Cube \n\n")
+    cat(paste(format(1:n,width=6),format((1:n)^2,width=8),format((1:n)^3,width=5),"\n"),sep="") #Basically, just tweak JMR's code from page 51
+}
+SquareCubes(7)
+
+##Chapter 4, Problem 4
+MulitplicationTable <- function(n=9){ #choose how large you want the table to be.  Default is 9, the standard table I learned in elementary school. 
+  sapply(1:n,function(x) 1:n*x ) #Vectorization makes this very simple.  Sapply simplifies the output as well, so that it is a matrix, just like we want.  
+}
+MulitplicationTable()
+
+## Chapter 7, problem 3
+#for Replicability, set a seed
+set.seed(1801)
+pop <- data.frame(m=rnorm(100,160,20),f=rnorm(100,160,20),gen=1)
+next.gen <- function(pop){
+  pop$m <- sample(pop$m)
+  pop$m <- apply(pop,1,mean)
+  pop$f <- pop$m
+  pop$gen <- pop$gen+1
+  return(pop)
+}
+
+next.gen(next.gen(next.gen(pop)))
+Generations <- function(ngen=9){
+  pop <- data.frame(m=rnorm(100,160,20),f=rnorm(100,160,20),gen=1)
+  if(ngen >1){
+  for(i in 1:ngen-1){
+    pop <- rbind(pop,next.gen(pop[pop$gen==i,]))
+  }
+  }
+  return(pop)
+}
+gendat <- Generations(ngen=9)
+gendat$gen <- as.factor(gendat$gen)
+histogram(~m|gen,data=gendat,xlab="Male Height") #There is the plot.  We see that after only about 4 generations, everyone falls into just a single bin.  
+
+##JMR chapter 7, number four 
+data(treeg)
+colnames(treeg)
+treeg$tree.ID <- factor(treeg$tree.ID)
+xyplot(height.ft~age,groups=tree.ID,type=c("l"),
+       data=treeg,xlab="age (years)",ylab="height (feet)",main="Height on Age for Trees")
+
