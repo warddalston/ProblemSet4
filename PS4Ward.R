@@ -9,10 +9,7 @@ setwd("~/Documents/WashU 2nd Year/Applied Stats Programming/Feb 13/ProblemSet4/"
 #Third, source my functions from the other script
 source("PS4Functions.R")
 #Fourth, set the seed for replicability
-set.seed(1801)
-#Fifth, load some packages
-library(plyr)
-library(ggplot2)
+
 
 ############# Section A: Reading in data without a clean format #################
 
@@ -74,6 +71,8 @@ Districts.data <- as.data.frame(Districts.data,stringsAsFactors=FALSE)
 ########## Now, start cleaning up this data: ##########
 Districts.data <- DataThinner(Districts.data) #clean out the constant and missing row (as required by bullet point three of question 5) 
 Districts.data <- as.data.frame(lapply(Districts.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
+Districts.data <- as.data.frame(lapply(Districts.data, function(x) gsub("\\}|\\{", "",x)),stringsAsFactors=FALSE) #get rid of curly brackets
+
 
 ####### split up the preference objects. ########
 Districts.prefs <-  sapply(Districts.data$district.prefs, strsplit, split=" ") 
@@ -84,6 +83,7 @@ Districts.data$pref.d2 <- sapply(1:nrow(Districts.data),function(i) Districts.pr
 Districts.data$pref.d3 <- sapply(1:nrow(Districts.data),function(i) Districts.prefs[[i]][3] )
 
 Districts.data$district.prefs <- NULL #remove the original 
+write.csv(Districts.data,file.path(DirCombined,"Turtles","Districts.csv"),row.names=FALSE)
 
 ####### Move on to the voters ###########
 
@@ -115,6 +115,7 @@ Voters.data$this.voter.sal.d2 <- sapply(1:nrow(Voters.data),function(i) Voters.s
 Voters.data$this.voter.sal.d3 <- sapply(1:nrow(Voters.data),function(i) Voters.sals[[i]][3] )
 
 Voters.data$this.voter.sal <- NULL #remove the original 
+write.csv(Voters.data,file.path(DirCombined,"Turtles","Voters.csv"),row.names=FALSE)
 
 ####### Move on to the Activists ###########
 
@@ -146,6 +147,7 @@ Activists.data$this.act.sal.d2 <- sapply(1:nrow(Activists.data),function(i) Acti
 Activists.data$this.act.sal.d3 <- sapply(1:nrow(Activists.data),function(i) Activists.sals[[i]][3] )
 
 Activists.data$this.act.sal <- NULL #remove the original 
+write.csv(Activists.data,file.path(DirCombined,"Turtles","Activists.csv"),row.names=FALSE)
 
 ####### Move on to the Parties ###########
 
@@ -157,6 +159,7 @@ Parties.data <- as.data.frame(Parties.data,stringsAsFactors=FALSE)
 ###### Clean it up ######
 Parties.data <- DataThinner(Parties.data)  #clean out the constant and missing row (as required by bullet point three of question 5) 
 Parties.data <- as.data.frame(lapply(Parties.data, function(x) gsub("\\]|\\[", "",x)),stringsAsFactors=FALSE) #get rid of brackets
+Parties.data <- as.data.frame(lapply(Parties.data, function(x) gsub("\\}|\\{", "",x)),stringsAsFactors=FALSE) #get rid of curly brackets
 
 ####### split up the preference objects. ########
 Parties.mean.positions <-  sapply(Parties.data$mean.position, strsplit, split=" ") 
@@ -177,6 +180,8 @@ Parties.data$enforcement.point.d2 <- sapply(1:nrow(Parties.data),function(i) Par
 Parties.data$enforcement.point.d3 <- sapply(1:nrow(Parties.data),function(i) Parties.enforcement.points[[i]][3] )
 
 Parties.data$enforcement.point <- NULL #remove the original 
+write.csv(Parties.data,file.path(DirCombined,"Turtles","Parties.csv"),row.names=FALSE)
+
 
 ####### Move on to the Candidates ###########
 
@@ -208,6 +213,7 @@ Candidates.data$position.obs.last.d2 <- sapply(1:nrow(Candidates.data),function(
 Candidates.data$position.obs.last.d3 <- sapply(1:nrow(Candidates.data),function(i) Candidates.positions.obs.last[[i]][3] )
 
 Candidates.data$positions.obs.last <- NULL #remove the original 
+write.csv(Candidates.data,file.path(DirCombined,"Turtles","Candidates.csv"),row.names=FALSE)
 
 #### Now, the plotting section 
 
@@ -232,13 +238,13 @@ names(Plot.names.list) <- Plot.names #name the elements of the list with the plo
 
 
 #This next section actually reads in the data for d1
-
 Plot.data.d1 <- scan("NetLogo.csv", what=Plot.names.list, sep=",", nlines=Globals$"global-counter", skip=StartPlots+15,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
 Plot.data.d1 <- as.data.frame(Plot.data.d1,stringsAsFactors=FALSE) #coerce it into a data frame
 Plot.data.d1 <- DataThinner(Plot.data.d1)  # remove the constant and missing columns
 Plot.data.d1 <- Plot.data.d1[,-c(3,5,7,9,11)] #remove all but one of the x columns, which are all duplicates 
 colnames(Plot.data.d1)[1] <- "Period" #this column represents which iteration this row's values come from.  
 Plot.data.d1 <- as.data.frame(apply(Plot.data.d1,2,as.numeric))
+write.csv(Plot.data.d1,file.path(DirCombined,"Plots","PositionPlot","D1.csv"),row.names=FALSE)
 
 
 #This starts reading in d2
@@ -249,6 +255,7 @@ Plot.data.d2 <- DataThinner(Plot.data.d2)  # remove the constant and missing col
 Plot.data.d2 <- Plot.data.d2[,-c(3,5,7,9,11)] #remove all but one of the x columns, which are all duplicates 
 colnames(Plot.data.d2)[1] <- "Period" #this column represents which iteration this row's values come from.  
 Plot.data.d2 <- as.data.frame(apply(Plot.data.d2,2,as.numeric))
+write.csv(Plot.data.d2,file.path(DirCombined,"Plots","PositionPlot","D2.csv"),row.names=FALSE)
 
 
 #This starts reading in d3
@@ -259,6 +266,8 @@ Plot.data.d3 <- DataThinner(Plot.data.d3)  # remove the constant and missing col
 Plot.data.d3 <- Plot.data.d3[,-c(3,5,7,9,11)] #remove all but one of the x columns, which are all duplicates 
 colnames(Plot.data.d3)[1] <- "Period" #this column represents which iteration this row's values come from.  
 Plot.data.d3 <- as.data.frame(apply(Plot.data.d3,2,as.numeric))
+write.csv(Plot.data.d3,file.path(DirCombined,"Plots","PositionPlot","D3.csv"),row.names=FALSE)
+
 
 pdf(file=file.path(DirCombined,"Plots","PositionPlot","Positions.pdf"),width=8.5,height=11) #create a graphic device, the size of a standard American piece of paper.  
 par(mfrow=c(3,1),mar=c(0,0,0,0),oma=c(5,5,5,2)) #set up the device.  I've made it so that I can have three plots stacked on top of each other. 
@@ -315,7 +324,7 @@ winners.names.list <- as.list(rep("",length(winners.names))) #create a list the 
 names(winners.names.list) <- winners.names #name the elements of the list with the plot names. 
 
 
-#This next section actually reads in the data for d1
+#This next section actually reads in the data for winners
 
 winners.data <- scan("NetLogo.csv", what=winners.names.list, sep=",", nlines=Globals$"global-counter", skip=StartWinners+10,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
 winners.data <- as.data.frame(winners.data,stringsAsFactors=FALSE) #coerce it into a data frame
@@ -323,6 +332,7 @@ winners.data <- DataThinner(winners.data)  # remove the constant and missing col
 winners.data <- winners.data[,-c(3,4)] #remove all but one of the x columns, which are all duplicates 
 colnames(winners.data)[1] <- "Period" #this column represents which iteration this row's values come from.  
 winners.data <- as.data.frame(apply(winners.data,2,as.numeric))
+write.csv(winners.data,file.path(DirCombined,"Plots","WinnersPlot","Winner.csv"),row.names=FALSE)
 
 # Make the winners plot.  I choose to make density plots for this one. 
 
@@ -338,7 +348,7 @@ rug(winners.data[,2],col="Blue") #plots where the data points are.  Doesn't look
 rug(winners.data[,3],col="Red")
 dev.off() #go check this one out too! 
 
-### The winners section
+### The Polarization
 
 #First, pick out the row where the winners section starts
 StartPolarization <- RowScanner("NetLogo.csv","\"POLARIZATION\"", start=StartWinners+168)
@@ -355,7 +365,7 @@ polarization.names.list <- as.list(rep("",length(polarization.names))) #create a
 names(polarization.names.list) <- polarization.names #name the elements of the list with the plot names. 
 
 
-#This next section actually reads in the data for d1
+#This next section actually reads in the data for Polarization
 
 polarization.data <- scan("NetLogo.csv", what=polarization.names.list, sep=",", nlines=Globals$"global-counter", skip=StartPolarization+10,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
 polarization.data <- as.data.frame(polarization.data,stringsAsFactors=FALSE) #coerce it into a data frame
@@ -363,6 +373,9 @@ polarization.data <- DataThinner(polarization.data)  # remove the constant and m
 polarization.data <- polarization.data[,-c(3,5)] #remove all but one of the x columns, which are all duplicates 
 colnames(polarization.data)[1:2] <- c("Period","CANDIDATES.y") #Rename a couple of columns so that we know better what is represented there. 
 polarization.data <- as.data.frame(apply(polarization.data,2,as.numeric))
+write.csv(polarization.data,file.path(DirCombined,"Plots","PolarizationPlot","Polarization.csv"),row.names=FALSE)
+
+#make the polarization plot now 
 
 pdf(file=file.path(DirCombined,"Plots","PolarizationPlot","Polarization.pdf"),width=11,height=8.5) #create a graphic device, the size of a standard American piece of paper.  
 par(mfrow=c(1,3),oma=c(0,0,3,0),mar=c(5,4,0,2)) #three plots on a single device
@@ -396,6 +409,7 @@ incumbent.data <- as.data.frame(incumbent.data,stringsAsFactors=FALSE) #coerce i
 incumbent.data <- DataThinner(incumbent.data)  # remove the constant and missing columns
 colnames(incumbent.data)[1:2] <- c("Period","Incumbent.win.percentage") #Rename the columns
 incumbent.data <- as.data.frame(apply(incumbent.data,2,as.numeric)) #make it numeric.
+write.csv(incumbent.data,file.path(DirCombined,"Plots","IncumbentPercentagePlot","IncumbentWins.csv"),row.names=FALSE)
 
 ## Make the plots for the incumbents data.
 pdf(file=file.path(DirCombined,"Plots","IncumbentPercentagePlot","IncumbentWins.pdf"),width=8.5,height=11) #create a graphic device, the size of a standard American piece of paper.  
