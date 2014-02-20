@@ -15,9 +15,21 @@ source("PS4Functions.R")
 
 ### The goal is to create a generic function that reads in NetLogo data, and then outputs a directy with several .R,.csv, and .pdf files.  
 
+#NetLogoReader - A function for importing and usefully exporting NetLogo data
+
+#This function does a lot.  First, it creates a series of directories in which NetLogo objects will be stored. It creates an R object containing NetLogo Globals information. It creates a .csv file for each type type of Turtle.  It also creates several plots and accompanying .csv files for these plots.  
+
+#Input: NetLogoFile - a charcter string containing a file path to a NetLogo File
+#       PlotRow - the row in which the information about plots begins.  In a NetLogo output this is the row that simply contains "PLOTS".  The function can find this row on its own, but this takes several minutes of scanning rows.  Thus, for better performance, I recommend giving this row as input.  Defaults to null.  WARNING: scanning the file row by row to find the start of the plots section takes around 5 to 10 minutes
+
+#Output: A directory containing all of the relevent information for performing anlaysis on a NetLogo simulation.  A list of global parameter values, .csv files for the Turtle breeds, and plots capturing a the behavior of the simulaiton (with relevent .csv files for the plots)
+
+#Author: Dalston G. Ward 
+
+NetLogoReader <- function(NetLogoFile,PlotRow=NULL){
 #First things first: make code that creates the directories
-DirName <- scan(file="NetLogo.csv", what="", sep=",", n=1, nlines=1, skip=1) #read in the name
-DirDate <- scan(file="NetLogo.csv", what="", sep=",", n=1, nlines=1, skip=2) #read in the date
+DirName <- scan(file=NetLogoFile, what="", sep=",", n=1, nlines=1, skip=1) #read in the name
+DirDate <- scan(file=NetLogoFile, what="", sep=",", n=1, nlines=1, skip=2) #read in the date
 DirDate <- strsplit(DirDate," ") #Clean up the time a bit
 DirDate <- unlist(DirDate)[1:2] #drop the time zone part, keep the rest
 DirDate[1] <- gsub("/","-",DirDate[1]) #The slashes in the date confuse R when it tries to write a directory.  Use dashes instead. 
@@ -37,12 +49,12 @@ sapply(c("PositionPlot","WinnersPlot","PolarizationPlot","IncumbentPercentagePlo
 
 ### Create the Globals object
 
-StartGlobal <- RowScanner("NetLogo.csv","GLOBALS") #Identify the row of the data where the globals section begins
-Globals.names <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartGlobal,na.strings="") #this line of code reads in the row with the names for the globals 
+StartGlobal <- RowScanner(NetLogoFile,"GLOBALS") #Identify the row of the data where the globals section begins
+Globals.names <- scan(NetLogoFile, what="", sep=",", nlines=1, skip=StartGlobal,na.strings="") #this line of code reads in the row with the names for the globals 
 Globals.name.list <- as.list(rep("",length(Globals.names))) #create a list the same length as the number of globals, with a "" as every element.  This will be useful in the scan function, where the what arguement can take a list as an arguement.  
 names(Globals.name.list) <- Globals.names #name the elements of the list with the globals names. 
 
-Globals <- scan("NetLogo.csv", what=Globals.name.list, sep=",", nlines=1, skip=StartGlobal+1,na.strings="") #this reads in the data on the line with the globals values.  It usese this data to fill in the list defined in the code above.  
+Globals <- scan(NetLogoFile, what=Globals.name.list, sep=",", nlines=1, skip=StartGlobal+1,na.strings="") #this reads in the data on the line with the globals values.  It usese this data to fill in the list defined in the code above.  
 
 #Now, I move to cleaning this thing up! 
 
@@ -58,14 +70,14 @@ dump("Globals",file=file.path(DirCombined,"Globals","Globals.R")) #dump the obje
 #### read in the TURTLES
 
 #these first few lines create a list which serves as the colnames for the data to be read in. Useful for all subsequent TURTLES objects
-StartColnames <- RowScanner("NetLogo.csv","TURTLES")
-Turtles.colnames <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartColnames,na.strings="")
+StartColnames <- RowScanner(NetLogoFile,"TURTLES")
+Turtles.colnames <- scan(NetLogoFile, what="", sep=",", nlines=1, skip=StartColnames,na.strings="")
 Turtles.list <- as.list(rep("",length(Turtles.colnames)))
 names(Turtles.list) <- Turtles.colnames #this is now a named list with the same names as the TURTLES section of a NetLogo file
 
 ####### create the districts data frame #############
-DistrictStart <- RowScanner("NetLogo.csv","{breed districts}")
-Districts.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n.districts, skip=DistrictStart-1,na.strings="") #nlines is finish-start, which captures all rows from the first {breed district} to the first {breed voters}
+DistrictStart <- RowScanner(NetLogoFile,"{breed districts}")
+Districts.data <- scan(NetLogoFile, what=Turtles.list, sep=",", nlines=Globals$n.districts, skip=DistrictStart-1,na.strings="") #nlines is finish-start, which captures all rows from the first {breed district} to the first {breed voters}
 Districts.data <- as.data.frame(Districts.data,stringsAsFactors=FALSE)
 
 ########## Now, start cleaning up this data: ##########
@@ -88,8 +100,8 @@ write.csv(Districts.data,file.path(DirCombined,"Turtles","Districts.csv"),row.na
 ####### Move on to the voters ###########
 
 ###### read in the data ######
-VoterStart <- RowScanner("NetLogo.csv","{breed voters}",start=DistrictStart+Globals$n.districts)
-Voters.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n.districts*Globals$"num-voters-per-district", skip=VoterStart-1,na.strings="") 
+VoterStart <- RowScanner(NetLogoFile,"{breed voters}",start=DistrictStart+Globals$n.districts)
+Voters.data <- scan(NetLogoFile, what=Turtles.list, sep=",", nlines=Globals$n.districts*Globals$"num-voters-per-district", skip=VoterStart-1,na.strings="") 
 Voters.data <- as.data.frame(Voters.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
@@ -120,8 +132,8 @@ write.csv(Voters.data,file.path(DirCombined,"Turtles","Voters.csv"),row.names=FA
 ####### Move on to the Activists ###########
 
 ###### read in the data ######
-ActivistStart <- RowScanner("NetLogo.csv","{breed activists}",start=VoterStart+Globals$n.districts*Globals$"num-voters-per-district")
-Activists.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n.districts*Globals$"num-activists-per-district", skip=ActivistStart-1,na.strings="") 
+ActivistStart <- RowScanner(NetLogoFile,"{breed activists}",start=VoterStart+Globals$n.districts*Globals$"num-voters-per-district")
+Activists.data <- scan(NetLogoFile, what=Turtles.list, sep=",", nlines=Globals$n.districts*Globals$"num-activists-per-district", skip=ActivistStart-1,na.strings="") 
 Activists.data <- as.data.frame(Activists.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
@@ -152,8 +164,8 @@ write.csv(Activists.data,file.path(DirCombined,"Turtles","Activists.csv"),row.na
 ####### Move on to the Parties ###########
 
 ###### read in the data ######
-PartyStart <- RowScanner("NetLogo.csv","{breed parties}",start=ActivistStart+Globals$n.districts*Globals$"num-activists-per-district")
-Parties.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n.parties, skip=PartyStart-1,na.strings="") 
+PartyStart <- RowScanner(NetLogoFile,"{breed parties}",start=ActivistStart+Globals$n.districts*Globals$"num-activists-per-district")
+Parties.data <- scan(NetLogoFile, what=Turtles.list, sep=",", nlines=Globals$n.parties, skip=PartyStart-1,na.strings="") 
 Parties.data <- as.data.frame(Parties.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
@@ -186,8 +198,8 @@ write.csv(Parties.data,file.path(DirCombined,"Turtles","Parties.csv"),row.names=
 ####### Move on to the Candidates ###########
 
 ###### read in the data ######
-CandStart <- RowScanner("NetLogo.csv","{breed cands}",start=PartyStart+Globals$n.parties)
-Candidates.data <- scan("NetLogo.csv", what=Turtles.list, sep=",", nlines=Globals$n.parties*Globals$n.districts, skip=CandStart-1,na.strings="") 
+CandStart <- RowScanner(NetLogoFile,"{breed cands}",start=PartyStart+Globals$n.parties)
+Candidates.data <- scan(NetLogoFile, what=Turtles.list, sep=",", nlines=Globals$n.parties*Globals$n.districts, skip=CandStart-1,na.strings="") 
 Candidates.data <- as.data.frame(Candidates.data,stringsAsFactors=FALSE)
 
 ###### Clean it up ######
@@ -220,16 +232,18 @@ write.csv(Candidates.data,file.path(DirCombined,"Turtles","Candidates.csv"),row.
 ### First, the positions plots
 
 #locate the start of the plotting section in the NetLogo file with RowScanner
-StartPlots <- RowScanner("NetLogo.csv","PLOTS", start=CandStart)
+if(is.null(PlotRow)){
+StartPlots <- RowScanner(NetLogoFile,"PLOTS", start=CandStart) ####THIS TAKES A LONG TIME!!!
+} else {StartPlots <- PlotRow}
 
 #begin by writing some code to help read in each section (constructing the list that is like the skelton of the dataframes!) 
 
-Plot.names.1 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartPlots+13,na.strings="") #this line of code reads in the row with the red/blue part of the names for the plot data
+Plot.names.1 <- scan(NetLogoFile, what="", sep=",", nlines=1, skip=StartPlots+13,na.strings="") #this line of code reads in the row with the red/blue part of the names for the plot data
 Plot.names.1 <- Plot.names.1[-which(is.na(Plot.names.1))] #Remove Missing Values
 Plot.names.1 <- lapply(Plot.names.1, function(x) gsub("\"", "",x)) #remove extra quotes
 Plot.names.1 <- rep(Plot.names.1,each=4) #make enough repetitions for each element that will go into Plot names 2
 
-Plot.names.2 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartPlots+14,na.strings="") #this line of code reads in the row with the 2nd part of names. 
+Plot.names.2 <- scan(NetLogoFile, what="", sep=",", nlines=1, skip=StartPlots+14,na.strings="") #this line of code reads in the row with the 2nd part of names. 
 
 Plot.names <-paste(Plot.names.1,Plot.names.2,sep=".") #Now combine the two. 
 
@@ -238,7 +252,7 @@ names(Plot.names.list) <- Plot.names #name the elements of the list with the plo
 
 
 #This next section actually reads in the data for d1
-Plot.data.d1 <- scan("NetLogo.csv", what=Plot.names.list, sep=",", nlines=Globals$"global-counter", skip=StartPlots+15,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+Plot.data.d1 <- scan(NetLogoFile, what=Plot.names.list, sep=",", nlines=Globals$"global-counter", skip=StartPlots+15,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
 Plot.data.d1 <- as.data.frame(Plot.data.d1,stringsAsFactors=FALSE) #coerce it into a data frame
 Plot.data.d1 <- DataThinner(Plot.data.d1)  # remove the constant and missing columns
 Plot.data.d1 <- Plot.data.d1[,-c(3,5,7,9,11)] #remove all but one of the x columns, which are all duplicates 
@@ -248,8 +262,8 @@ write.csv(Plot.data.d1,file.path(DirCombined,"Plots","PositionPlot","D1.csv"),ro
 
 
 #This starts reading in d2
-D2Start <- RowScanner("NetLogo.csv","\"D2\"", start=StartPlots+168+14)
-Plot.data.d2 <-  scan("NetLogo.csv", what=Plot.names.list, sep=",", nlines=Globals$"global-counter", skip=D2Start+13,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+D2Start <- RowScanner(NetLogoFile,"\"D2\"", start=StartPlots+168+14)
+Plot.data.d2 <-  scan(NetLogoFile, what=Plot.names.list, sep=",", nlines=Globals$"global-counter", skip=D2Start+13,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
 Plot.data.d2 <- as.data.frame(Plot.data.d2,stringsAsFactors=FALSE) #coerce it into a data frame
 Plot.data.d2 <- DataThinner(Plot.data.d2)  # remove the constant and missing columns
 Plot.data.d2 <- Plot.data.d2[,-c(3,5,7,9,11)] #remove all but one of the x columns, which are all duplicates 
@@ -259,8 +273,8 @@ write.csv(Plot.data.d2,file.path(DirCombined,"Plots","PositionPlot","D2.csv"),ro
 
 
 #This starts reading in d3
-D3Start <- RowScanner("NetLogo.csv","\"D3\"", start=D2Start+168+13)
-Plot.data.d3 <-  scan("NetLogo.csv", what=Plot.names.list, sep=",", nlines=Globals$"global-counter", skip=D3Start+13,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+D3Start <- RowScanner(NetLogoFile,"\"D3\"", start=D2Start+168+13)
+Plot.data.d3 <-  scan(NetLogoFile, what=Plot.names.list, sep=",", nlines=Globals$"global-counter", skip=D3Start+13,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
 Plot.data.d3 <- as.data.frame(Plot.data.d3,stringsAsFactors=FALSE) #coerce it into a data frame
 Plot.data.d3 <- DataThinner(Plot.data.d3)  # remove the constant and missing columns
 Plot.data.d3 <- Plot.data.d3[,-c(3,5,7,9,11)] #remove all but one of the x columns, which are all duplicates 
@@ -310,14 +324,14 @@ dev.off() #close the device, and go check it out!
 ### The winners section
 
 #First, pick out the row where the winners section starts
-StartWinners <- RowScanner("NetLogo.csv","\"WINNERS\"", start=D3Start+168+13)
+StartWinners <- RowScanner(NetLogoFile,"\"WINNERS\"", start=D3Start+168+13)
 
-winners.names.1 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartWinners+8,na.strings="") #this line of code reads in the row with the red/blue part of the names for the winners data
+winners.names.1 <- scan(NetLogoFile, what="", sep=",", nlines=1, skip=StartWinners+8,na.strings="") #this line of code reads in the row with the red/blue part of the names for the winners data
 winners.names.1 <- winners.names.1[-which(is.na(winners.names.1))] #Remove Missing Values
 winners.names.1 <- lapply(winners.names.1, function(x) gsub("\"", "",x)) #remove extra quotes
 winners.names.1 <- rep(winners.names.1,each=4) #make enough repetitions for each element that will go into Plot names 2
 
-winners.names.2 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartWinners+9,na.strings="") #this line of code reads in the row with the 2nd part of names. 
+winners.names.2 <- scan(NetLogoFile, what="", sep=",", nlines=1, skip=StartWinners+9,na.strings="") #this line of code reads in the row with the 2nd part of names. 
 winners.names <-paste(winners.names.1,winners.names.2,sep=".") #Now combine the two. 
 
 winners.names.list <- as.list(rep("",length(winners.names))) #create a list the same length as the number of globals, with a "" as every element.  This will be useful in the scan function, where the what arguement can take a list as an arguement.  
@@ -326,7 +340,7 @@ names(winners.names.list) <- winners.names #name the elements of the list with t
 
 #This next section actually reads in the data for winners
 
-winners.data <- scan("NetLogo.csv", what=winners.names.list, sep=",", nlines=Globals$"global-counter", skip=StartWinners+10,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+winners.data <- scan(NetLogoFile, what=winners.names.list, sep=",", nlines=Globals$"global-counter", skip=StartWinners+10,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
 winners.data <- as.data.frame(winners.data,stringsAsFactors=FALSE) #coerce it into a data frame
 winners.data <- DataThinner(winners.data)  # remove the constant and missing columns
 winners.data <- winners.data[,-c(3,4)] #remove all but one of the x columns, which are all duplicates 
@@ -351,14 +365,14 @@ dev.off() #go check this one out too!
 ### The Polarization
 
 #First, pick out the row where the winners section starts
-StartPolarization <- RowScanner("NetLogo.csv","\"POLARIZATION\"", start=StartWinners+168)
+StartPolarization <- RowScanner(NetLogoFile,"\"POLARIZATION\"", start=StartWinners+168)
 
-polarization.names.1 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartPolarization+8,na.strings="") #this line of code reads in the row with the red/blue part of the names for the polarization data
+polarization.names.1 <- scan(NetLogoFile, what="", sep=",", nlines=1, skip=StartPolarization+8,na.strings="") #this line of code reads in the row with the red/blue part of the names for the polarization data
 polarization.names.1 <- polarization.names.1[-which(is.na(polarization.names.1))] #Remove Missing Values
 polarization.names.1 <- lapply(polarization.names.1, function(x) gsub("\"", "",x)) #remove extra quotes
 polarization.names.1 <- rep(polarization.names.1,each=4) #make enough repetitions for each element that will go into Plot names 2
 
-polarization.names.2 <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartPolarization+9,na.strings="") #this line of code reads in the row with the 2nd part of names. 
+polarization.names.2 <- scan(NetLogoFile, what="", sep=",", nlines=1, skip=StartPolarization+9,na.strings="") #this line of code reads in the row with the 2nd part of names. 
 polarization.names <-paste(polarization.names.1,polarization.names.2,sep=".") #Now combine the two. 
 
 polarization.names.list <- as.list(rep("",length(polarization.names))) #create a list the same length as the number of globals, with a "" as every element.  This will be useful in the scan function, where the what arguement can take a list as an arguement.  
@@ -367,7 +381,7 @@ names(polarization.names.list) <- polarization.names #name the elements of the l
 
 #This next section actually reads in the data for Polarization
 
-polarization.data <- scan("NetLogo.csv", what=polarization.names.list, sep=",", nlines=Globals$"global-counter", skip=StartPolarization+10,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+polarization.data <- scan(NetLogoFile, what=polarization.names.list, sep=",", nlines=Globals$"global-counter", skip=StartPolarization+10,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
 polarization.data <- as.data.frame(polarization.data,stringsAsFactors=FALSE) #coerce it into a data frame
 polarization.data <- DataThinner(polarization.data)  # remove the constant and missing columns
 polarization.data <- polarization.data[,-c(3,5)] #remove all but one of the x columns, which are all duplicates 
@@ -394,9 +408,9 @@ dev.off()
 ### Finally, code to bring in the Incumbent Wins data.  
 
 #First, pick out the row where the winners section starts
-StartIncumbents <- RowScanner("NetLogo.csv","\"INCUMBENT\"", start=StartPolarization+168)
+StartIncumbents <- RowScanner(NetLogoFile,"\"INCUMBENT\"", start=StartPolarization+168)
 
-incumbent.names <- scan("NetLogo.csv", what="", sep=",", nlines=1, skip=StartIncumbents+7,na.strings="") #this line of code reads in the row of column names for this part of the output. 
+incumbent.names <- scan(NetLogoFile, what="", sep=",", nlines=1, skip=StartIncumbents+7,na.strings="") #this line of code reads in the row of column names for this part of the output. 
 
 incumbent.names.list <- as.list(rep("",length(incumbent.names))) #create a list the same length as the number of globals, with a "" as every element.  This will be useful in the scan function, where the what arguement can take a list as an arguement.  
 names(incumbent.names.list) <- incumbent.names #name the elements of the list with the incumbent column names. 
@@ -404,7 +418,7 @@ names(incumbent.names.list) <- incumbent.names #name the elements of the list wi
 
 #This next section actually reads in the data.
 
-incumbent.data <- scan("NetLogo.csv", what=incumbent.names.list, sep=",", nlines=Globals$"global-counter", skip=StartIncumbents+8,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
+incumbent.data <- scan(NetLogoFile, what=incumbent.names.list, sep=",", nlines=Globals$"global-counter", skip=StartIncumbents+8,na.strings="") #this reads in the data values.  It usese this data to fill in the list defined in the code above.  
 incumbent.data <- as.data.frame(incumbent.data,stringsAsFactors=FALSE) #coerce it into a data frame
 incumbent.data <- DataThinner(incumbent.data)  # remove the constant and missing columns
 colnames(incumbent.data)[1:2] <- c("Period","Incumbent.win.percentage") #Rename the columns
@@ -413,18 +427,21 @@ write.csv(incumbent.data,file.path(DirCombined,"Plots","IncumbentPercentagePlot"
 
 ## Make the plots for the incumbents data.
 pdf(file=file.path(DirCombined,"Plots","IncumbentPercentagePlot","IncumbentWins.pdf"),width=8.5,height=11) #create a graphic device, the size of a standard American piece of paper.  
-split.screen(figs=c(2,1))
+split.screen(figs=c(2,1)) #Split screen is cool.  It allows me to make graphics with different numbers of plots on each column/row
 split.screen(figs=c(1,2),screen=2)
 screen(1)
 par(mar=c(4,4,3,1))
-plot(x=incumbent.data$Period[-1],y=incumbent.data$Incumbent.win.percentage[-1],pch=20,main="Trend in Incumbent Win Percentage with a Loess Smoother",ylab="Winning Percentage",xlab="Simulation period")
+plot(x=incumbent.data$Period[-1],y=incumbent.data$Incumbent.win.percentage[-1],pch=20,main="Trend in Incumbent Win Percentage with a Loess Smoother",ylab="Winning Percentage",xlab="Simulation period") #make a scatter plot of the percentages over time
 smooooth <- loess(incumbent.data$Incumbent.win.percentage[-1]~incumbent.data$Period[-1])
-lines(predict(smooooth),col="purple",lwd=2)
+lines(predict(smooooth),col="purple",lwd=2) #plot the predictions from a LOESS smoother to it
 screen(3)
 par(mar=c(4,4,3,1))
-boxplot(list(incumbent.data$Incumbent.win.percentage[1:84],incumbent.data$Incumbent.win.percentage[(168/2)+1:168]),outline=FALSE,names=c("Periods 1-84","Periods 85-168"),ylab="Winning Percentage",main="Win Percentage by Simulation Half")
+boxplot(list(incumbent.data$Incumbent.win.percentage[1:84],incumbent.data$Incumbent.win.percentage[(168/2)+1:168]),outline=FALSE,names=c("Periods 1-84","Periods 85-168"),ylab="Winning Percentage",main="Win Percentage by Simulation Half") #makes a box and whisker plot for comparing the first and second halves of the simulation
 screen(4)
 par(mar=c(4,5,3,1))
-plot(density(incumbent.data$Incumbent.win.percentage[-1]),xlab="Winning Percentage",ylab="Kernal Density",main="Distribution of Winning Percentages")
-close.screen( all = TRUE )
+plot(density(incumbent.data$Incumbent.win.percentage[-1]),xlab="Winning Percentage",ylab="Kernal Density",main="Distribution of Winning Percentages") #a density plot of the entire percentage distribution.  
+close.screen( all = TRUE ) #stop the split screening
 dev.off()
+}
+
+NetLogoReader(NetLogoFile="NetLogo.csv",PlotRow=8531) #It works!!!!
