@@ -469,17 +469,16 @@ MulitplicationTable()
 ## Chapter 7, problem 3
 #for Replicability, set a seed
 set.seed(1801)
-pop <- data.frame(m=rnorm(100,160,20),f=rnorm(100,160,20),gen=1)
+pop <- data.frame(m=rnorm(100,160,20),f=rnorm(100,160,20),gen=1) #add in a generation counter
 next.gen <- function(pop){
   pop$m <- sample(pop$m)
   pop$m <- apply(pop,1,mean)
   pop$f <- pop$m
-  pop$gen <- pop$gen+1
+  pop$gen <- pop$gen+1 #add in an update with each generation
   return(pop)
 }
 
-next.gen(next.gen(next.gen(pop)))
-Generations <- function(ngen=9){
+Generations <- function(ngen=9){ #this function (crudely) uses a for loop and rbind to stack the generations
   pop <- data.frame(m=rnorm(100,160,20),f=rnorm(100,160,20),gen=1)
   if(ngen >1){
   for(i in 1:ngen-1){
@@ -489,13 +488,12 @@ Generations <- function(ngen=9){
   return(pop)
 }
 gendat <- Generations(ngen=9)
-gendat$gen <- as.factor(gendat$gen)
+gendat$gen <- as.factor(gendat$gen) #make it a fcator so lattice will condition on it better
 histogram(~m|gen,data=gendat,xlab="Male Height") #There is the plot.  We see that after only about 4 generations, everyone falls into just a single bin.  
 
 ##JMR chapter 7, number four 
 data(treeg)
-colnames(treeg)
-treeg$tree.ID <- factor(treeg$tree.ID)
-xyplot(height.ft~age,groups=tree.ID,type=c("l"),
+treeg$tree.ID <- factor(treeg$tree.ID) #for grouping 
+xyplot(height.ft~age,groups=tree.ID,type=c("l"), #the groups part here is what makes it plot all of those lines
        data=treeg,xlab="age (years)",ylab="height (feet)",main="Height on Age for Trees")
 
