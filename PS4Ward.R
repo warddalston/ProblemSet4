@@ -398,15 +398,19 @@ colnames(incumbent.data)[1:2] <- c("Period","Incumbent.win.percentage") #Rename 
 incumbent.data <- as.data.frame(apply(incumbent.data,2,as.numeric)) #make it numeric.
 
 ## Make the plots for the incumbents data.
-dev.off()
+pdf(file=file.path(DirCombined,"Plots","IncumbentPercentagePlot","IncumbentWins.pdf"),width=8.5,height=11) #create a graphic device, the size of a standard American piece of paper.  
 split.screen(figs=c(2,1))
 split.screen(figs=c(1,2),screen=2)
 screen(1)
 par(mar=c(4,4,3,1))
-plot(x=incumbent.data$Period[-1],y=incumbent.data$Incumbent.win.percentage[-1],type="l",col="purple",main="Trend in Incumbent Win Percentage [Excluding Period 0]",ylab="Winning Percentage",xlab="Simulation period")
-lines(loess(incumbent.data$Incumbent.win.percentage[-1]~incumbent.data$Period[-1]))
+plot(x=incumbent.data$Period[-1],y=incumbent.data$Incumbent.win.percentage[-1],pch=20,main="Trend in Incumbent Win Percentage with a Loess Smoother",ylab="Winning Percentage",xlab="Simulation period")
+smooooth <- loess(incumbent.data$Incumbent.win.percentage[-1]~incumbent.data$Period[-1])
+lines(predict(smooooth),col="purple",lwd=2)
 screen(3)
 par(mar=c(4,4,3,1))
-boxplot(list(incumbent.data$Incumbent.win.percentage[1:84],incumbent.data$Incumbent.win.percentage[(168/2)+1:168]),outline=FALSE,names=c("Periods 1-84","Periods 85-168"),ylab="Winning Percentage")
+boxplot(list(incumbent.data$Incumbent.win.percentage[1:84],incumbent.data$Incumbent.win.percentage[(168/2)+1:168]),outline=FALSE,names=c("Periods 1-84","Periods 85-168"),ylab="Winning Percentage",main="Win Percentage by Simulation Half")
 screen(4)
+par(mar=c(4,5,3,1))
 plot(density(incumbent.data$Incumbent.win.percentage[-1]),xlab="Winning Percentage",ylab="Kernal Density",main="Distribution of Winning Percentages")
+close.screen( all = TRUE )
+dev.off()
